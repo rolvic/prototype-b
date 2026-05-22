@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prototype B - Notes App</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+        .header { background: linear-gradient(135deg, #2196F3, #1565C0); color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 22px; }
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 15px; }
+        .card h2 { color: #1565C0; margin-bottom: 12px; font-size: 16px; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
+        textarea { min-height: 80px; resize: vertical; }
+        .btn { padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #1565C0; }
+        .note { border-left: 4px solid #2196F3; padding: 12px; margin-bottom: 10px; background: #fafafa; border-radius: 0 6px 6px 0; }
+        .note h3 { font-size: 15px; margin-bottom: 5px; }
+        .note p { font-size: 13px; color: #666; }
+        .note .meta { font-size: 11px; color: #999; margin-top: 5px; }
+        .empty { text-align: center; padding: 30px; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Prototype B</h1>
+        <p>Notes App (Firestore)</p>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>New Note</h2>
+            <input type="text" id="title" placeholder="Title">
+            <textarea id="content" placeholder="Content"></textarea>
+            <select id="category">
+                <option value="general">General</option>
+                <option value="work">Work</option>
+                <option value="personal">Personal</option>
+                <option value="ideas">Ideas</option>
+            </select>
+            <button class="btn" onclick="createNote()">Save Note</button>
+        </div>
+        <div class="card">
+            <h2>Notes</h2>
+            <div id="notes-list"><div class="empty">Loading...</div></div>
+        </div>
+    </div>
+    <script>
+        const API = "/api";
+        async function loadNotes() {
+            try {
+                const res = await fetch(API + "/notes");
+                const data = await res.json();
+                const list = document.getElementById("notes-list");
+                if (!data.notes || data.notes.length === 0) {
+                    list.innerHTML = '<div class="empty">No notes yet</div>';
+                    return;
+                }
+                list.innerHTML = data.notes.map(n =>
+                    `<div class="note">
+                        <h3>${n.title}</h3>
+                        <p>${n.content}</p>
+                        <div class="meta">${n.category} | ${n.created_at}</div>
+                    </div>`
+                ).join("");
+            } catch(e) { console.error(e); }
+        }
+        async function createNote() {
+            const title = document.getElementById("title").value;
+            const content = document.getElementById("content").value;
+            const category = document.getElementById("category").value;
+            if (!title || !content) return alert("Title and content required");
+            await fetch(API + "/notes", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({title, content, category})
+            });
+            document.getElementById("title").value = "";
+            document.getElementById("content").value = "";
+            loadNotes();
+        }
+        loadNotes();
+    </script>
+</body>
+</html>
